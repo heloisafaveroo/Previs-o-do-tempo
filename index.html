@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Previsão do Tempo</title>
+  <style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background: rgb(218, 218, 255);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #fff;
+  text-align: center;
+}
+
+.container {
+  background-color: rgba(135, 157, 255, 0.9);
+  border-radius: 12px;
+  padding: 40px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+input {
+  padding: 12px 20px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  width: 60%;
+  outline: none;
+}
+
+button {
+  padding: 12px 20px;
+  background-color: #4400ff;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #0c0996;
+}
+
+#weatherInfo {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 10px;
+  background-color: #dff5ff;
+  color: #333;
+}
+
+#errorMessage {
+  color: rgb(226, 0, 0);
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+#weatherDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#weatherDetails img {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 15px;
+}
+
+#weatherDetails h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+#weatherDetails p {
+  font-size: 1.2rem;
+  margin: 5px 0;
+}
+  </style>
+
+</head>
+<body>
+  <div class="container">
+    <h1>Previsão do Tempo</h1>
+    
+    <form id="cityForm">
+      <input type="text" id="cityName" placeholder="Nome da Cidade" required>
+      <button type="submit">Buscar</button>
+    </form>
+
+    <div id="weatherInfo">
+      <p id="errorMessage"></p>
+      <div id="weatherDetails"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_KEY = '1a9820e3c08ef3d4861ac66bd77da863'; 
+
+const form = document.getElementById('cityForm');
+const cityNameInput = document.getElementById('cityName');
+const weatherInfoDiv = document.getElementById('weatherInfo');
+const errorMessage = document.getElementById('errorMessage');
+const weatherDetails = document.getElementById('weatherDetails');
+
+form.addEventListener('submit', function(event) {
+  event.preventDefault();
+  const cityName = cityNameInput.value.trim();
+  if (cityName) {
+    fetchWeatherData(cityName);
+  }
+});
+
+function fetchWeatherData(cityName) {
+  const savedData = localStorage.getItem(cityName);
+  if (savedData) {
+    displayWeather(JSON.parse(savedData));
+    return;
+  }
+
+  const url = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric&lang=pt_br`;
+
+  fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Cidade não encontrada');
+      }
+      return response.json();
+    })
+    .then(data => {
+      displayWeather(data);
+      saveWeatherData(cityName, data);
+    })
+    .catch(error => {
+      errorMessage.textContent = error.message;
+      weatherDetails.innerHTML = '';
+    });
+}
+function displayWeather(data) {
+  const { main, weather, wind } = data;
+  const { temp, humidity } = main;
+  const { description, icon } = weather[0];
+  const { speed } = wind;
+
+  weatherDetails.innerHTML = `
+    <h2>${data.name}, ${data.sys.country}</h2>
+    <img src="https://openweathermap.org/img/wn/${icon}.png" alt="${description}">
+    <p>Temperatura: ${temp}°C</p>
+    <p>Umidade: ${humidity}%</p>
+    <p>Descrição: ${description}</p>
+    <p>Vento: ${speed} m/s</p>
+  `;
+
+  errorMessage.textContent = '';
+}
+function saveWeatherData(cityName, data) {
+  localStorage.setItem(cityName, JSON.stringify(data));
+}
+
+  </script>
+</body>
+</html>
